@@ -14,13 +14,30 @@ def home():
 
 @app.route("/api/v1/<weather_station>/<date>")  # <> special syntax for url we use in flask
 def station(weather_station, date):
-    filename = "data/TG_STAID" + str(weather_station).zfill(6) + ".txt"  # stations nr is extended to 6 digits by zeros
+    filename = "data_small/TG_STAID" + str(weather_station).zfill(6) + ".txt"  # stations nr is extended to 6 digits by zeros
     df = pd.read_csv(filename, skiprows=20, parse_dates=["    DATE"])
     # csv_date = f"{date[0:4]}-{date[4:6]}-{date[6:]}" if we wanted to add dashes for user
     temperature = df.loc[df['    DATE'] == date]['   TG'].squeeze() / 10
     return {"station": weather_station,
             "date": date,
             "temperature": temperature}
+
+
+@app.route("/api/v1/<weather_station>")
+def all_data(weather_station):
+    filename = "data_small/TG_STAID" + str(weather_station).zfill(6) + ".txt"
+    df = pd.read_csv(filename, skiprows=20, parse_dates=["    DATE"])
+    result = df.to_dict(orient="records")  # we put the whole dataframe into dictionary
+    return result
+
+
+@app.route("/api/v1/annual/<weather_station>/<year>")
+def yearly(weather_station, year):
+    filename = "data_small/TG_STAID" + str(weather_station).zfill(6) + ".txt"
+    df = pd.read_csv(filename, skiprows=20)
+    df['    DATE'] = df['    DATE'].astype(str)  # convert numbers to str
+    result = df[df['    DATE'].str.startswith(str(year))].to_dict(orient="records")
+    return result
 
 
 if __name__ == "__main__":
